@@ -1,7 +1,8 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { sendEmail } from '../services/email.service';
+import { Editor } from '@tinymce/tinymce-react';
 
 function EmailSender() {
 
@@ -12,6 +13,8 @@ function EmailSender() {
     });
 
     const [send, setSend] = useState(false);
+
+    const editorRef = useRef(null);
 
     function handleFieldChange(event, name) {
         setEmailData({...emailData, [name]: event.target.value});
@@ -36,6 +39,7 @@ function EmailSender() {
                 subject: '',
                 message: '',
             });
+            editorRef.current.setContent("");
         } catch (error) {
             console.log(error);
             toast.error('Failed to send email!!');
@@ -46,9 +50,9 @@ function EmailSender() {
         console.log(emailData);
     }
 
-  return (
+return (
     <div className='w-full min-h-screen flex justify-center items-center'>
-        <div className='email-card md:w-1/3 md:mx-0 mx-5 w-full -mt-6 p-5 border rounded-lg shadow-lg bg-slate-50'>
+        <div className='email-card md:w-1/2 md:mx-0 mx-5 w-full -mt-6 p-5 border rounded-lg shadow-lg bg-slate-50'>
             <h1 className='text-gray-600 text-3xl text-center'>Email Sender</h1>
             <p className='text-slate-400 text-center mt-1'>Send Email to your favourite person</p>
             <form onSubmit={handleSubmit}>
@@ -62,7 +66,32 @@ function EmailSender() {
                 </div>
                 <div className="mt-5">
                     <label htmlFor="message" className="block mb-2 text-lg font-medium text-gray-600">Your message:</label>
-                    <textarea id="message" value={emailData.message} onChange={(event)=>handleFieldChange(event,'message')} rows="9" className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Enter Here..." required></textarea>
+                    {/* <textarea id="message" value={emailData.message} onChange={(event)=>handleFieldChange(event,'message')} rows="9" className="block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Enter Here..." required></textarea> */}
+                    <Editor
+                        apiKey='g07rqoz9a3bhh6p0nsw2tdh6d2e1r06xslmplixdqar339f2'
+                        onInit={(evt, editor) => editorRef.current = editor}
+                        onEditorChange={(event)=>{
+                            setEmailData({...emailData, 'message': editorRef.current.getContent()});
+                        }}
+                        init={{
+                            plugins: [
+                            'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+                            'checklist', 'mediaembed', 'casechange', 'export', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'editimage', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown',
+                            'importword', 'exportword', 'exportpdf'
+                            ],
+                            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+                            tinycomments_mode: 'embedded',
+                            tinycomments_author: 'Author name',
+                            mergetags_list: [
+                            { value: 'First.Name', title: 'First Name' },
+                            { value: 'Email', title: 'Email' },
+                            ],
+                            ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
+                            exportpdf_converter_options: { 'format': 'Letter', 'margin_top': '1in', 'margin_right': '1in', 'margin_bottom': '1in', 'margin_left': '1in' },
+                            exportword_converter_options: { 'document': { 'size': 'Letter' } },
+                            importword_converter_options: { 'formatting': { 'styles': 'inline', 'resets': 'inline',	'defaults': 'inline', } },
+                        }}
+                    />
                 </div>
 
                 {send && (
@@ -86,7 +115,7 @@ function EmailSender() {
             </form>
         </div>
     </div>
-  )
+)
 }
 
 export default EmailSender
