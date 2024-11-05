@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useRef, useState } from 'react'
 import toast from 'react-hot-toast';
-import { sendEmail } from '../services/email.service';
+import { sendEmail, sendEmailWithAttachment } from '../services/email.service';
 import { Editor } from '@tinymce/tinymce-react';
 
 function EmailSender() {
@@ -14,10 +14,16 @@ function EmailSender() {
 
     const [send, setSend] = useState(false);
 
+    const [attachment, setAttachment] = useState(null);
+
     const editorRef = useRef(null);
 
     function handleFieldChange(event, name) {
         setEmailData({...emailData, [name]: event.target.value});
+    }
+
+    function handleAttachmentChange(event) {
+        setAttachment(event.target.files[0] || null);
     }
 
     async function handleSubmit(event) {
@@ -30,20 +36,35 @@ function EmailSender() {
         }
 
         // send email using api
+        setSend(true);
         try {
-            setSend(true);
-            await sendEmail(emailData);
+            if(attachment){
+
+                const formData = new FormData();
+                formData.append('recipient', emailData.recipient);
+                formData.append('subject', emailData.subject);
+                formData.append('message', emailData.message);
+                formData.append('attachment', attachment);
+
+                await sendEmailWithAttachment(formData);
+            }
+            else{
+                await sendEmail(emailData);
+            }
+
             toast.success('Email sent successfully!!');
-            setEmailData({
-                recipient: '',
-                subject: '',
-                message: '',
-            });
+            
             editorRef.current.setContent("");
         } catch (error) {
             console.log(error);
             toast.error('Failed to send email!!');
         } finally{
+            setEmailData({
+                recipient: '',
+                subject: '',
+                message: '',
+            });
+            setAttachment(null);
             setSend(false);
         }
 
@@ -92,6 +113,11 @@ return (
                             importword_converter_options: { 'formatting': { 'styles': 'inline', 'resets': 'inline',	'defaults': 'inline', } },
                         }}
                     />
+                </div>
+
+                <div className="mt-5">
+                    <label htmlFor="attachment" className="block mb-2 text-lg font-medium text-gray-600">Attachment:</label>
+                    <input type="file" id="attachment" onChange={handleAttachmentChange} className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder='Add Attachment'/>
                 </div>
 
                 {send && (
